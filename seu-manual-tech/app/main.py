@@ -2,6 +2,11 @@ from fastapi import FastAPI
 from app.database.core import engine, Base
 from app.routes import manutencao, material
 
+# Import all models to ensure they're registered before creating tables
+from app.models import manutencao as manutencao_model
+from app.models import material as material_model
+from app.models import manutencao_material  # noqa: F401
+
 # Create tables on startup (simplification for challenge)
 Base.metadata.create_all(bind=engine)
 
