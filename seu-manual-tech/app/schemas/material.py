@@ -28,7 +28,6 @@ class MaterialConsumoCreate(MaterialConsumoBase):
 
 
 class MaterialConsumoSchema(CamelSchema):
-    """Schema para exibir material consumido em uma manutenção"""
     id: int
     nome: str
     quantidade: float

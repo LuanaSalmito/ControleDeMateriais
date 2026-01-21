@@ -7,7 +7,7 @@ from sqlalchemy.pool import StaticPool
 from app.database.core import Base, get_db
 from app.main import app
 
-# In-memory SQLite for testing
+
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(
