@@ -13,3 +13,7 @@ class ManutencaoMaterial(BaseColumns):
     quantidade: Mapped[float] = mapped_column(Numeric(10, 2))
     manutencao: Mapped["Manutencao"] = relationship("Manutencao", back_populates="materiais_consumidos")  
     material: Mapped["Material"] = relationship("Material", back_populates="consumos")
+    
+    @property
+    def custo_calculado(self) -> float:
+        return float(self.quantidade) * float(self.material.preco_unitario)

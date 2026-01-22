@@ -1,5 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
+from app.models.enums import StatusManutencao
 
 
 def test_manutencao_without_materials(client: TestClient):
@@ -7,7 +8,7 @@ def test_manutencao_without_materials(client: TestClient):
     
     response = client.post(
         "/manutencao/",
-        json={"resumo": "Reparar parede", "status": "aberta"}
+        json={"resumo": "Reparar parede", "status": StatusManutencao.ABERTO.value}
     )
     assert response.status_code == 201
     data = response.json()
@@ -22,7 +23,7 @@ def test_add_material_to_manutencao(client: TestClient):
     
     manutencao_response = client.post(
         "/manutencao/",
-        json={"resumo": "Reparar parede", "status": "aberta"}
+        json={"resumo": "Reparar parede", "status": StatusManutencao.ABERTO.value}
     )
     manutencao_id = manutencao_response.json()["id"]
     
@@ -55,7 +56,7 @@ def test_add_multiple_materials_to_manutencao(client: TestClient):
     
     manutencao_response = client.post(
         "/manutencao/",
-        json={"resumo": "Reparar parede norte", "status": "aberta"}
+        json={"resumo": "Reparar parede norte", "status": StatusManutencao.ABERTO.value}
     )
     manutencao_id = manutencao_response.json()["id"]
     
@@ -105,13 +106,12 @@ def test_add_multiple_materials_to_manutencao(client: TestClient):
     assert data["custoTotalMateriais"] == 150.0
 
 
-@pytest.mark.parametrize("status", ["finalizada", "fechada", "concluida", "concluída"])
-def test_cannot_add_material_to_finished_manutencao(client: TestClient, status: str):
+def test_cannot_add_material_to_finished_manutencao(client: TestClient):
     """Testa que não é possível adicionar materiais a manutenção com status finalizado"""
     
     manutencao_response = client.post(
         "/manutencao/",
-        json={"resumo": "Reparar parede", "status": status}
+        json={"resumo": "Reparar parede", "status": StatusManutencao.FINALIZADO.value}
     )
     manutencao_id = manutencao_response.json()["id"]
     
@@ -136,7 +136,7 @@ def test_cannot_add_nonexistent_material(client: TestClient):
    
     manutencao_response = client.post(
         "/manutencao/",
-        json={"resumo": "Reparar parede", "status": "aberta"}
+        json={"resumo": "Reparar parede", "status": StatusManutencao.ABERTO.value}
     )
     manutencao_id = manutencao_response.json()["id"]
     
@@ -172,7 +172,7 @@ def test_invalid_quantity(client: TestClient):
     
     manutencao = client.post(
         "/manutencao/",
-        json={"resumo": "Reparar parede", "status": "aberta"}
+        json={"resumo": "Reparar parede", "status": StatusManutencao.ABERTO.value}
     ).json()
     
     material = client.post(

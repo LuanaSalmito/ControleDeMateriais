@@ -1,11 +1,12 @@
 from app.schemas.core import CamelSchema
 from app.schemas.material import MaterialConsumoSchema
+from app.models.enums import StatusManutencao
 from datetime import datetime
 
 
 class ManutencaoBase(CamelSchema):
     resumo: str
-    status: str = "aberta"
+    status: StatusManutencao = StatusManutencao.ABERTO
 
 
 class ManutencaoCreate(ManutencaoBase):

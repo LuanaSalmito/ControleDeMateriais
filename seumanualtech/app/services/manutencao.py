@@ -1,6 +1,7 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select
 from app.models.manutencao import Manutencao
+from app.models.manutencao_material import ManutencaoMaterial
 from app.schemas.manutencao import ManutencaoCreate, ManutencaoSchema
 from app.schemas.material import MaterialConsumoSchema
 
@@ -9,24 +10,16 @@ def get_by_id(db: Session, id: int) -> Manutencao | None:
     return db.scalar(select(Manutencao).where(Manutencao.id == id))
 
 
-def get_by_id_with_materials(db: Session, id: int) -> ManutencaoSchema | None:
-    manutencao = db.scalar(select(Manutencao).where(Manutencao.id == id))
-    if not manutencao:
-        return None
-    
+def _manutencao_to_schema(manutencao: Manutencao) -> ManutencaoSchema:
     materiais_schema = []
-    custo_total = 0.0
     
     for consumo in manutencao.materiais_consumidos:
-        custo = float(consumo.quantidade) * float(consumo.material.preco_unitario)
-        custo_total += custo
-        
         material_consumo = MaterialConsumoSchema(
             id=consumo.material.id,
             nome=consumo.material.nome,
             quantidade=float(consumo.quantidade),
             preco_unitario=float(consumo.material.preco_unitario),
-            custo=custo
+            custo=consumo.custo_calculado
         )
         materiais_schema.append(material_consumo)
     
@@ -36,8 +29,16 @@ def get_by_id_with_materials(db: Session, id: int) -> ManutencaoSchema | None:
         status=manutencao.status,
         created_at=manutencao.criado_em,
         materiais=materiais_schema,
-        custo_total_materiais=custo_total
+        custo_total_materiais=manutencao.custo_total_materiais
     )
+
+
+def get_by_id_with_materials(db: Session, id: int) -> ManutencaoSchema | None:
+    manutencao = db.scalar(select(Manutencao).where(Manutencao.id == id))
+    if not manutencao:
+        return None
+    
+    return _manutencao_to_schema(manutencao)
 
 
 def list_all(
@@ -46,7 +47,13 @@ def list_all(
     limit: int = 100,
     status: str | None = None
 ) -> list[ManutencaoSchema]:
-    query = select(Manutencao)
+    query = (
+        select(Manutencao)
+        .options(
+            selectinload(Manutencao.materiais_consumidos)
+            .selectinload(ManutencaoMaterial.material)
+        )
+    )
     
     if status:
         query = query.where(Manutencao.status == status)
@@ -56,13 +63,7 @@ def list_all(
     
     manutencoes = list(db.scalars(query).all())
     
-    result = []
-    for manutencao in manutencoes:
-        manutencao_schema = get_by_id_with_materials(db, manutencao.id)
-        if manutencao_schema:
-            result.append(manutencao_schema)
-    
-    return result
+    return [_manutencao_to_schema(manutencao) for manutencao in manutencoes]
 
 
 def create(db: Session, schema: ManutencaoCreate) -> Manutencao:
@@ -83,14 +84,10 @@ def create_bulk(db: Session, schemas: list[ManutencaoCreate]) -> list[Manutencao
     
     db.commit()
     
-    result = []
     for manutencao in created_manutencoes:
         db.refresh(manutencao)
-        manutencao_schema = get_by_id_with_materials(db, manutencao.id)
-        if manutencao_schema:
-            result.append(manutencao_schema)
     
-    return result
+    return [_manutencao_to_schema(manutencao) for manutencao in created_manutencoes]
 
 
 def update(db: Session, id: int, schema: ManutencaoCreate) -> Manutencao | None:

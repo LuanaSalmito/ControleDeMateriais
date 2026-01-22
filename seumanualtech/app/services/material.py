@@ -3,6 +3,7 @@ from sqlalchemy import select
 from app.models.material import Material
 from app.models.manutencao_material import ManutencaoMaterial
 from app.models.manutencao import Manutencao
+from app.models.enums import StatusManutencao
 from app.schemas.material import MaterialCreate, MaterialConsumoCreate
 
 
@@ -100,8 +101,7 @@ def adicionar_material_manutencao(
     if not manutencao:
         raise ValueError("Manutenção não encontrada")
     
-    status_finalizados = ["finalizada", "fechada", "concluida", "concluída"]
-    if manutencao.status.lower() in status_finalizados:
+    if manutencao.status == StatusManutencao.FINALIZADO:
         raise ValueError("Não é possível adicionar materiais a uma manutenção finalizada.")
     
     material = db.scalar(select(Material).where(Material.id == schema.material_id))

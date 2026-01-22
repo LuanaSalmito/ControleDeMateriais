@@ -12,6 +12,7 @@ Em outro terminal:
 import requests
 import json
 from typing import Any
+from app.models.enums import StatusManutencao
 
 BASE_URL = "http://127.0.0.1:8000"
 
@@ -33,7 +34,7 @@ def main():
     print("\n📝 1. Criando uma manutenção...")
     manutencao_data = {
         "resumo": "Reparar parede norte do prédio A",
-        "status": "aberta"
+        "status": StatusManutencao.ABERTO.value
     }
     response = requests.post(f"{BASE_URL}/manutencao/", json=manutencao_data)
     manutencao = response.json()
@@ -108,7 +109,7 @@ def main():
     # Criar manutenção finalizada
     response = requests.post(
         f"{BASE_URL}/manutencao/",
-        json={"resumo": "Manutenção já concluída", "status": "finalizada"}
+        json={"resumo": "Manutenção já concluída", "status": StatusManutencao.FINALIZADO.value}
     )
     manutencao_finalizada = response.json()
     
